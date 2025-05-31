@@ -29,5 +29,5 @@ async def health_check():
 # example.org/users/..
 app.include_router(users_router)
 
-# example.org/urls/..
+# example.org/links/..
 app.include_router(links_router)

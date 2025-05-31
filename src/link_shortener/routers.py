@@ -1,15 +1,36 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.auth import verify_credentials
 from src.link_shortener.services import create_short_link, get_original_url
 from src.link_shortener.schemas import LinkCreate, LinkOut
+from src.link_shortener.models import Link
 
 
-router = APIRouter(prefix='/urls', tags=["urls"])
+router = APIRouter(prefix='/links', tags=["urls"])
+
+
+@router.get("/")
+async def list_links(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Link))
+    links = result.scalars().all()
+    return links
+
+
+@router.get('/deactivate/{short_url}')
+async def deactivate_link(short_url: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Link).filter_by(short_url=short_url))
+
+    link = result.scalar_one_or_none()
+    link.is_active = False
+
+    await db.commit()
+
+    return link
 
 
 @router.post("/shorten", response_model=LinkOut)
@@ -30,15 +51,15 @@ async def shorten_url(
     return link
 
 
-@router.get("/{short_code}")
+@router.get("/{short_url}")
 async def redirect(
-        short_code: str,
+        short_url: str,
         db: AsyncSession = Depends(get_db),
 ):
     """
     API которое делает редирект на оригинальную ссылку
     """
-    link = await get_original_url(short_code, db)
+    link = await get_original_url(short_url, db)
 
     if not link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Link not found or expired")
