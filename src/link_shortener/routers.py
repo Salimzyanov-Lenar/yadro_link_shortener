@@ -47,7 +47,7 @@ async def shorten_url(
     """
     link = await create_short_link(link_data, db)
 
-    full_link = "http://localhost:8000/urls/" + link.short_url
+    full_link = "http://localhost:8000/links/" + link.short_url
     link.short_url = full_link
 
     return link
