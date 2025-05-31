@@ -22,7 +22,11 @@ async def list_links(db: AsyncSession = Depends(get_db)):
 
 
 @router.get('/deactivate/{short_url}')
-async def deactivate_link(short_url: str, db: AsyncSession = Depends(get_db)):
+async def deactivate_link(
+    short_url: str,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_credentials)
+):
     result = await db.execute(select(Link).filter_by(short_url=short_url))
 
     link = result.scalar_one_or_none()
