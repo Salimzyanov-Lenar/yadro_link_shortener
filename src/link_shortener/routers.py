@@ -28,7 +28,6 @@ async def deactivate_link(
     _: str = Depends(verify_credentials)
 ):
     result = await db.execute(select(Link).filter_by(short_url=short_url))
-
     link = result.scalar_one_or_none()
     link.is_active = False
 
@@ -48,7 +47,6 @@ async def shorten_url(
     """
     link = await create_short_link(link_data, db)
 
-    # Заменить localhost на требуемый ip
     full_link = "http://localhost:8000/urls/" + link.short_url
     link.short_url = full_link
 
@@ -56,10 +54,7 @@ async def shorten_url(
 
 
 @router.get("/{short_url}")
-async def redirect(
-        short_url: str,
-        db: AsyncSession = Depends(get_db),
-):
+async def redirect(short_url: str, db: AsyncSession = Depends(get_db)):
     """
     API которое делает редирект на оригинальную ссылку
     """
