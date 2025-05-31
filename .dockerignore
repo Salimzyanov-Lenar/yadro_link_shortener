@@ -1,0 +1,23 @@
+# PyCharm
+.idea/
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Other stuff
+README.md
+.gitignore
+.dockerignore
+.env-example
