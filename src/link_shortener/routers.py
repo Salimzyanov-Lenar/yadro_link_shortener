@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import RedirectResponse
 
 from sqlalchemy import select
@@ -15,8 +15,13 @@ router = APIRouter(prefix='/links', tags=["urls"])
 
 
 @router.get("/")
-async def list_links(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Link))
+async def list_links(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """ Хэндлер для вывода списка всех созданных ссылок """
+    result = await db.execute(select(Link).offset(skip).limit(limit))
     links = result.scalars().all()
     return links
 
@@ -27,6 +32,7 @@ async def deactivate_link(
     db: AsyncSession = Depends(get_db),
     _: str = Depends(verify_credentials)
 ):
+    """ Хэндлер для деактивации созданной укороченной ссылки """
     result = await db.execute(select(Link).filter_by(short_url=short_url))
     link = result.scalar_one_or_none()
     link.is_active = False
@@ -42,9 +48,7 @@ async def shorten_url(
         db: AsyncSession = Depends(get_db),
         _: str = Depends(verify_credentials),
 ):
-    """
-    API для создания короткой ссылки
-    """
+    """ Хэндлер для создания короткой ссылки """
     link = await create_short_link(link_data, db)
 
     full_link = "http://localhost:8000/links/" + link.short_url
@@ -55,9 +59,7 @@ async def shorten_url(
 
 @router.get("/{short_url}")
 async def redirect(short_url: str, db: AsyncSession = Depends(get_db)):
-    """
-    API которое делает редирект на оригинальную ссылку
-    """
+    """ Хэндлер для редиректа, принимающий код который был создан для короткой ссылки """
     link = await get_original_url(short_url, db)
 
     if not link:
